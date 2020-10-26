@@ -1,5 +1,6 @@
 import mongooseToJson from '@meanie/mongoose-to-json';
 import { Document, Model, Mongoose, Schema } from 'mongoose';
+import autopopulate from 'mongoose-autopopulate';
 import ServiceContainer from '../services/service-container';
 import { EmotionInstance } from './emotion-model';
 import Attributes from './model';
@@ -72,7 +73,8 @@ function createUserSchema(container: ServiceContainer) {
     schema.virtual('emotions', {
         ref: 'Emotion',
         localField: '_id',
-        foreignField: 'owner'
+        foreignField: 'owner',
+        autopopulate: { maxDepth: 1 }
     });
 
     // Password hash validation
@@ -87,6 +89,7 @@ function createUserSchema(container: ServiceContainer) {
         }
     });
 
+    schema.plugin(autopopulate);
     schema.plugin(mongooseToJson);
 
     return schema;
