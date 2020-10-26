@@ -3,21 +3,21 @@ import ServiceContainer from '../services/service-container';
 import Controller, { Link } from './controller';
 
 /**
- * Users controller class.
+ * Emotions controller class.
  * 
- * Root path : `/users`
+ * Root path : `/emotions`
  */
-export default class UserController extends Controller {
+export default class EmotionController extends Controller {
 
     /**
-     * Creates a new users controller.
+     * Creates a new emotions controller.
      * 
      * @param container Services container
      */
     public constructor(container: ServiceContainer) {
-        super(container, '/users');
+        super(container, '/emotions');
         this.registerEndpoint({ method: 'GET', uri: '/', handlers: this.listHandler });
-        this.registerEndpoint({ method: 'GET', uri: '/:id', handlers: this.getHandler });
+        this.registerEndpoint({ method: 'GET', uri: '/:id', handlers: this.specificHandler });
         this.registerEndpoint({ method: 'POST', uri: '/', handlers: this.createHandler });
         this.registerEndpoint({ method: 'PUT', uri: '/:id', handlers: this.modifyHandler });
         this.registerEndpoint({ method: 'PATCH', uri: '/:id', handlers: this.updateHandler });
@@ -25,9 +25,9 @@ export default class UserController extends Controller {
     }
 
     /**
-     * Lists all users.
+     * Lists all emotions.
      * 
-     * Path : `GET /users`
+     * Path : `GET /emotions`
      * 
      * @param req Express request
      * @param res Express response
@@ -35,40 +35,40 @@ export default class UserController extends Controller {
      */
     public async listHandler(req: Request, res: Response): Promise<any> {
         try {
-            return res.status(200).send({ users: await this.db.users.find() });
+            return res.status(200).json({ emotions: await this.db.emotions.find() });
         } catch (err) {
             return res.status(500).send(this.container.errors.formatServerError());
         }
     }
 
     /**
-     * Gets a specific user.
+     * Gets a specific emotion.
      * 
-     * Path : `GET /users/:id`
+     * Path : `GET /emotions`
      * 
      * @param req Express request
      * @param res Express response
      * @async
      */
-    public async getHandler(req: Request, res: Response): Promise<any> {
+    public async specificHandler(req: Request, res: Response): Promise<any> {
         try {
-            const user = await this.db.users.findById(req.params.id).populate('applications');
-            if (user == null) {
-                return res.status(404).send(this.container.errors.formatErrors({
+            const emotion = await this.db.emotions.findById(req.params.id);
+            if (emotion == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
                     error: 'not_found',
-                    error_description: 'User not found'
+                    error_description: 'Emotion not found'
                 }));
             }
-            return res.status(200).send({ user });
+            return res.status(200).json({ emotion });
         } catch (err) {
             return res.status(500).send(this.container.errors.formatServerError());
         }
     }
 
     /**
-     * Creates a new user.
+     * Creates a new emotion.
      * 
-     * Path : `POST /users`
+     * Path : `POST /emotions`
      * 
      * @param req Express request
      * @param res Express response
@@ -76,16 +76,17 @@ export default class UserController extends Controller {
      */
     public async createHandler(req: Request, res: Response): Promise<any> {
         try {
-            const user = await this.db.users.create({
+            const emotion = await this.db.emotions.create({
                 name: req.body.name,
-                password: req.body.password
+                color: req.body.color,
+                owner: req.body.owner
             });
             return res.status(201).send({
-                id: user.id,
+                id: emotion.id,
                 links: [{
-                    rel: 'Gets the created user',
+                    rel: 'Gets the created emotion',
                     action: 'GET',
-                    href: `${req.protocol}://${req.get('host')}${this.rootUri}/${user.id}`
+                    href: `${req.protocol}://${req.get('host')}${this.rootUri}/${emotion.id}`
                 }] as Link[]
             });
         } catch (err) {
@@ -97,9 +98,8 @@ export default class UserController extends Controller {
     }
 
     /**
-     * Modifies an user.
-     * 
-     * Path : `PUT /users/:id`
+     * Modifies an emotion
+     * Path : `PUT /emotions/:id`
      * 
      * @param req Express request
      * @param res Express response
@@ -107,22 +107,22 @@ export default class UserController extends Controller {
      */
     public async modifyHandler(req: Request, res: Response): Promise<any> {
         try {
-            const user = await this.db.users.findById(req.params.id);
-            if (user == null) {
-                return res.status(404).send(this.container.errors.formatErrors({
+            const emotion = await this.db.emotions.findById(req.params.id);
+            if (emotion == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
                     error: 'not_found',
-                    error_description: 'User not found'
+                    error_description: 'Emotion not found'
                 }));
             }
-            user.name = req.body.name;
-            user.password = req.body.password;
-            await user.save();
+            emotion.name = req.body.name;
+            emotion.color = req.body.color;
+            await emotion.save();
             return res.status(200).send({
-                id: user.id,
+                id: emotion.id,
                 links: [{
-                    rel: 'Gets the modified user',
+                    rel: 'Gets the modified emotion',
                     action: 'GET',
-                    href: `${req.protocol}://${req.get('host')}${this.rootUri}/${user.id}`
+                    href: `${req.protocol}://${req.get('host')}${this.rootUri}/${emotion.id}`
                 }] as Link[]
             });
         } catch (err) {
@@ -134,9 +134,8 @@ export default class UserController extends Controller {
     }
 
     /**
-     * Updates an user.
-     * 
-     * Path : `PATCH /users/:id`
+     * Updates an emotion
+     * Path : `PUT /emotions/:id`
      * 
      * @param req Express request
      * @param res Express response
@@ -144,26 +143,26 @@ export default class UserController extends Controller {
      */
     public async updateHandler(req: Request, res: Response): Promise<any> {
         try {
-            const user = await this.db.users.findById(req.params.id);
-            if (user == null) {
-                return res.status(404).send(this.container.errors.formatErrors({
+            const emotion = await this.db.emotions.findById(req.params.id);
+            if (emotion == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
                     error: 'not_found',
-                    error_description: 'User not found'
+                    error_description: 'Emotion not found'
                 }));
             }
             if (req.body.name != null) {
-                user.name = req.body.name;
+                emotion.name = req.body.name;
             }
-            if (req.body.password != null) {
-                user.password = req.body.password;
+            if (req.body.color != null) {
+                emotion.color = req.body.color;
             }
-            await user.save();
+            await emotion.save();
             return res.status(200).send({
-                id: user.id,
+                id: emotion.id,
                 links: [{
-                    rel: 'Gets the updated user',
+                    rel: 'Gets the updated emotion',
                     action: 'GET',
-                    href: `${req.protocol}://${req.get('host')}${this.rootUri}/${user.id}`
+                    href: `${req.protocol}://${req.get('host')}${this.rootUri}/${emotion.id}`
                 }] as Link[]
             });
         } catch (err) {
@@ -175,9 +174,9 @@ export default class UserController extends Controller {
     }
 
     /**
-     * Deletes an user.
+     * Deletes an emotion.
      * 
-     * Path : `DELETE /users/:id`
+     * Path : `DELETE /emotions/:id`
      * 
      * @param req Express request
      * @param res Express response
@@ -185,14 +184,14 @@ export default class UserController extends Controller {
      */
     public async deleteHandler(req: Request, res: Response): Promise<any> {
         try {
-            const user = await this.db.users.findByIdAndDelete(req.params.id);
-            if (user == null) {
-                return res.status(404).send(this.container.errors.formatErrors({
+            const emotion = await this.db.emotions.findByIdAndDelete(req.params.id);
+            if (emotion == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
                     error: 'not_found',
-                    error_description: 'User not found'
+                    error_description: 'Emotion not found'
                 }));
             }
-            return res.status(204).send();
+            return res.status(204).json();
         } catch (err) {
             return res.status(500).send(this.container.errors.formatServerError());
         }
