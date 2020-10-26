@@ -21,6 +21,8 @@ export default class UserController extends Controller {
         this.registerEndpoint({ method: 'POST', uri: '/', handlers: this.createHandler });
         this.registerEndpoint({ method: 'PATCH', uri: '/:id', handlers: this.updateHandler });
         this.registerEndpoint({ method: 'DELETE', uri: '/:id', handlers: this.deleteHandler });
+        this.registerEndpoint({ method: 'GET', uri: '/:id/emotions', handlers: this.listEmotionsHandler });
+        this.registerEndpoint({ method: 'GET', uri: '/:id/emotions/:emotionId', handlers: this.getEmotionHandler });
     }
 
     /**
@@ -157,6 +159,61 @@ export default class UserController extends Controller {
             return res.status(204).send();
         } catch (err) {
             return res.status(500).send(this.container.errors.formatServerError());
+        }
+    }
+
+    /**
+     * Lists all emotions of an user.
+     * 
+     * Path : `GET /users/:id/emotions`
+     * 
+     * @param req Express request
+     * @param res Express response
+     * @async
+     */
+    public async listEmotionsHandler(req: Request, res: Response): Promise<any> {
+        try {
+            const user = await this.db.users.findById(req.params.id);
+            if (user == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'User not found'
+                }));
+            }
+            return res.status(200).json({ emotions: user.emotions });
+        } catch (err) {
+            return res.status(500).json(this.container.errors.formatServerError());
+        }
+    }
+
+    /**
+     * Gets a specific emotion of an user.
+     * 
+     * Path : `GET /users/:id/emotions/:emotionId`
+     * 
+     * @param req Express request
+     * @param res Express response
+     * @async
+     */
+    public async getEmotionHandler(req: Request, res: Response): Promise<any> {
+        try {
+            const user = await this.db.users.findById(req.params.id);
+            if (user == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'User not found'
+                }));
+            }
+            const emotion = user.emotions.find(currentEmotion => currentEmotion.id === req.params.emotionId);
+            if (emotion == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'Emotion not found'
+                }));
+            }
+            return res.status(200).json(emotion);
+        } catch (err) {
+            return res.status(500).json(this.container.errors.formatServerError());
         }
     }
 }
