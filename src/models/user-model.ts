@@ -1,5 +1,7 @@
+import mongooseToJson from '@meanie/mongoose-to-json';
 import { Document, Model, Mongoose, Schema } from 'mongoose';
 import ServiceContainer from '../services/service-container';
+import { EmotionInstance } from './emotion-model';
 import Attributes from './model';
 
 /**
@@ -8,6 +10,17 @@ import Attributes from './model';
 export interface UserAttributes extends Attributes {
     name: string;
     password: string;
+    emotions: EmotionInstance[];
+    days: Day[];
+}
+
+/**
+ * Day interface.
+ */
+export interface Day {
+    date: Date;
+    description: string;
+    emotions: EmotionInstance[];
 }
 
 /**
@@ -43,11 +56,23 @@ function createUserSchema(container: ServiceContainer) {
             required: [true, 'Password is required'],
             minlength: [8, 'Password is too small'],
             select: false
+        },
+        days: {
+            type: [{
+                type: createDaySubSchema(container)
+            }],
+            default: []
         }
     }, {
         timestamps: true,
         toJSON: { virtuals: true },
         toObject: { virtuals: true }
+    });
+
+    schema.virtual('emotions', {
+        ref: 'Emotion',
+        localField: '_id',
+        foreignField: 'owner'
     });
 
     // Password hash validation
@@ -62,5 +87,40 @@ function createUserSchema(container: ServiceContainer) {
         }
     });
 
+    schema.plugin(mongooseToJson);
+
+    return schema;
+}
+
+/**
+ * Creates the day subschema.
+ * 
+ * @param container Services container
+ * @returns Day subschema
+ */
+function createDaySubSchema(container: ServiceContainer) {
+    const schema = new Schema({
+        date: {
+            type: Schema.Types.Date,
+            required: [true, 'Day date is required']
+        },
+        description: {
+            type: Schema.Types.String,
+            default: null
+        },
+        emotions: {
+            type: [{
+                type: Schema.Types.ObjectId,
+                ref: 'Emotion'
+            }],
+            required: [true, 'Day emotions are required'],
+            validate: {
+                validator: (emotions: EmotionInstance[]) => emotions.every(emotion => emotion.owner.emotions.includes(emotion)),
+                message: 'Specified emotion is not owned by the user'
+            }
+        }
+    }, {
+        timestamps: true
+    });
     return schema;
 }
