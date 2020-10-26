@@ -19,7 +19,6 @@ export default class UserController extends Controller {
         this.registerEndpoint({ method: 'GET', uri: '/', handlers: this.listHandler });
         this.registerEndpoint({ method: 'GET', uri: '/:id', handlers: this.getHandler });
         this.registerEndpoint({ method: 'POST', uri: '/', handlers: this.createHandler });
-        this.registerEndpoint({ method: 'PUT', uri: '/:id', handlers: this.modifyHandler });
         this.registerEndpoint({ method: 'PATCH', uri: '/:id', handlers: this.updateHandler });
         this.registerEndpoint({ method: 'DELETE', uri: '/:id', handlers: this.deleteHandler });
     }
@@ -84,43 +83,6 @@ export default class UserController extends Controller {
                 id: user.id,
                 links: [{
                     rel: 'Gets the created user',
-                    action: 'GET',
-                    href: `${req.protocol}://${req.get('host')}${this.rootUri}/${user.id}`
-                }] as Link[]
-            });
-        } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
-            }
-            return res.status(500).send(this.container.errors.formatServerError());
-        }
-    }
-
-    /**
-     * Modifies an user.
-     * 
-     * Path : `PUT /users/:id`
-     * 
-     * @param req Express request
-     * @param res Express response
-     * @async
-     */
-    public async modifyHandler(req: Request, res: Response): Promise<any> {
-        try {
-            const user = await this.db.users.findById(req.params.id);
-            if (user == null) {
-                return res.status(404).send(this.container.errors.formatErrors({
-                    error: 'not_found',
-                    error_description: 'User not found'
-                }));
-            }
-            user.name = req.body.name;
-            user.password = req.body.password;
-            await user.save();
-            return res.status(200).send({
-                id: user.id,
-                links: [{
-                    rel: 'Gets the modified user',
                     action: 'GET',
                     href: `${req.protocol}://${req.get('host')}${this.rootUri}/${user.id}`
                 }] as Link[]
