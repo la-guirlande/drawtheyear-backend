@@ -33,7 +33,7 @@ export default class EmotionController extends Controller {
      * @param res Express response
      * @async
      */
-    public async listHandler(req: Request, res: Response): Promise<any> {
+    public async listHandler(req: Request, res: Response): Promise<Response> {
         try {
             return res.status(200).json({ emotions: await this.db.emotions.find() });
         } catch (err) {
@@ -50,7 +50,7 @@ export default class EmotionController extends Controller {
      * @param res Express response
      * @async
      */
-    public async specificHandler(req: Request, res: Response): Promise<any> {
+    public async specificHandler(req: Request, res: Response): Promise<Response> {
         try {
             const emotion = await this.db.emotions.findById(req.params.id);
             if (emotion == null) {
@@ -74,7 +74,7 @@ export default class EmotionController extends Controller {
      * @param res Express response
      * @async
      */
-    public async createHandler(req: Request, res: Response): Promise<any> {
+    public async createHandler(req: Request, res: Response): Promise<Response> {
         try {
             const emotion = await this.db.emotions.create({
                 name: req.body.name,
@@ -105,7 +105,7 @@ export default class EmotionController extends Controller {
      * @param res Express response
      * @async
      */
-    public async modifyHandler(req: Request, res: Response): Promise<any> {
+    public async modifyHandler(req: Request, res: Response): Promise<Response> {
         try {
             const emotion = await this.db.emotions.findById(req.params.id);
             if (emotion == null) {
@@ -141,7 +141,7 @@ export default class EmotionController extends Controller {
      * @param res Express response
      * @async
      */
-    public async updateHandler(req: Request, res: Response): Promise<any> {
+    public async updateHandler(req: Request, res: Response): Promise<Response> {
         try {
             const emotion = await this.db.emotions.findById(req.params.id);
             if (emotion == null) {
@@ -182,7 +182,7 @@ export default class EmotionController extends Controller {
      * @param res Express response
      * @async
      */
-    public async deleteHandler(req: Request, res: Response): Promise<any> {
+    public async deleteHandler(req: Request, res: Response): Promise<Response> {
         try {
             const emotion = await this.db.emotions.findByIdAndDelete(req.params.id);
             if (emotion == null) {
