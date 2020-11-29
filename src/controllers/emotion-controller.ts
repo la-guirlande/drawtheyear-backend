@@ -35,7 +35,7 @@ export default class EmotionController extends Controller {
      */
     public async listHandler(req: Request, res: Response): Promise<Response> {
         try {
-            return res.status(200).json({ emotions: await this.db.emotions.find() });
+            return res.status(200).json({ emotions: await this.db.emotions.find().populate('owner') });
         } catch (err) {
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -52,7 +52,7 @@ export default class EmotionController extends Controller {
      */
     public async specificHandler(req: Request, res: Response): Promise<Response> {
         try {
-            const emotion = await this.db.emotions.findById(req.params.id);
+            const emotion = await this.db.emotions.findById(req.params.id).populate('owner');
             if (emotion == null) {
                 return res.status(404).json(this.container.errors.formatErrors({
                     error: 'not_found',
@@ -84,7 +84,7 @@ export default class EmotionController extends Controller {
             return res.status(201).send({
                 id: emotion.id,
                 links: [{
-                    rel: 'Gets the created emotion',
+                    rel: 'get_emotion',
                     action: 'GET',
                     href: `${req.protocol}://${req.get('host')}${this.rootUri}/${emotion.id}`
                 }] as Link[]
@@ -120,7 +120,7 @@ export default class EmotionController extends Controller {
             return res.status(200).send({
                 id: emotion.id,
                 links: [{
-                    rel: 'Gets the modified emotion',
+                    rel: 'get_emotion',
                     action: 'GET',
                     href: `${req.protocol}://${req.get('host')}${this.rootUri}/${emotion.id}`
                 }] as Link[]
@@ -160,7 +160,7 @@ export default class EmotionController extends Controller {
             return res.status(200).send({
                 id: emotion.id,
                 links: [{
-                    rel: 'Gets the updated emotion',
+                    rel: 'get_emotion',
                     action: 'GET',
                     href: `${req.protocol}://${req.get('host')}${this.rootUri}/${emotion.id}`
                 }] as Link[]
