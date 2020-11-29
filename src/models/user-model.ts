@@ -1,6 +1,6 @@
 import mongooseToJson from '@meanie/mongoose-to-json';
+import moment from 'moment';
 import { Document, Model, Mongoose, Schema } from 'mongoose';
-import autopopulate from 'mongoose-autopopulate';
 import ServiceContainer from '../services/service-container';
 import { EmotionInstance } from './emotion-model';
 import Attributes from './model';
@@ -20,6 +20,7 @@ export interface UserAttributes extends Attributes {
  */
 export interface Day {
     date: Date;
+    formattedDate?: string;
     description: string;
     emotions: EmotionInstance[];
 }
@@ -73,8 +74,7 @@ function createUserSchema(container: ServiceContainer) {
     schema.virtual('emotions', {
         ref: 'Emotion',
         localField: '_id',
-        foreignField: 'owner',
-        autopopulate: { maxDepth: 1 }
+        foreignField: 'owner'
     });
 
     // Password hash validation
@@ -88,10 +88,7 @@ function createUserSchema(container: ServiceContainer) {
             }
         }
     });
-
-    schema.plugin(autopopulate);
     schema.plugin(mongooseToJson);
-
     return schema;
 }
 
@@ -105,7 +102,12 @@ function createDaySubSchema(container: ServiceContainer) {
     const schema = new Schema({
         date: {
             type: Schema.Types.Date,
-            required: [true, 'Day date is required']
+            required: [true, 'Day date is required'],
+            unique: true,
+            validate: {
+                validator: (date: Date) => moment(date, 'YYYY-MM-DD', true).toDate().getTime() === date.getTime(),
+                message: 'Day date must be formatted in "YYYY-MM-DD"'
+            }
         },
         description: {
             type: Schema.Types.String,
@@ -117,13 +119,25 @@ function createDaySubSchema(container: ServiceContainer) {
                 ref: 'Emotion'
             }],
             required: [true, 'Day emotions are required'],
-            validate: {
-                validator: (emotions: EmotionInstance[]) => emotions.every(emotion => emotion.owner.emotions.includes(emotion)),
-                message: 'Specified emotion is not owned by the user'
-            }
+            validate: [{
+                validator: (emotionIds: string[]) => emotionIds.every(async emotionId => {
+                    const emotion = await container.db.emotions.findById(emotionId);
+                    return emotion != null && emotion.owner.emotions.includes(emotion);
+                }),
+                message: 'Invalid emotion'
+            }, {
+                validator: (emotions: EmotionInstance[]) => emotions.length > 0,
+                message: '1 emotion minimum is required'
+            }]
         }
     }, {
-        timestamps: true
+        _id: false,
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
+    });
+    schema.virtual('formattedDate').get(function(this: Day) {
+        return moment(this.date).format('YYYY-MM-DD');
     });
     return schema;
 }
