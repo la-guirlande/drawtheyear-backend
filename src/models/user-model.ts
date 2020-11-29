@@ -1,4 +1,6 @@
 import mongooseToJson from '@meanie/mongoose-to-json';
+import _ from 'lodash';
+import moment from 'moment';
 import { Document, Model, Mongoose, Schema } from 'mongoose';
 import ServiceContainer from '../services/service-container';
 import { EmotionInstance } from './emotion-model';
@@ -18,15 +20,17 @@ export interface UserAttributes extends Attributes {
  * Day interface.
  */
 export interface Day {
-    date: Date;
+    date: string;
     description: string;
     emotions: EmotionInstance[];
+    toDate?(): Date;
 }
 
 /**
  * User instance interface.
  */
-export interface UserInstance extends UserAttributes, Document {}
+export interface UserInstance extends UserAttributes, Document {
+}
 
 /**
  * Creates the user model.
@@ -61,7 +65,11 @@ function createUserSchema(container: ServiceContainer) {
             type: [{
                 type: createDaySubSchema(container)
             }],
-            default: []
+            default: [],
+            validate: {
+                validator: (days: Day[]) => _.uniq(days.map(day => day.date)).length === days.length,
+                message: 'Day already exists'
+            }
         }
     }, {
         timestamps: true,
@@ -86,9 +94,7 @@ function createUserSchema(container: ServiceContainer) {
             }
         }
     });
-
     schema.plugin(mongooseToJson);
-
     return schema;
 }
 
@@ -101,8 +107,15 @@ function createUserSchema(container: ServiceContainer) {
 function createDaySubSchema(container: ServiceContainer) {
     const schema = new Schema({
         date: {
-            type: Schema.Types.Date,
-            required: [true, 'Day date is required']
+            type: Schema.Types.String,
+            required: [true, 'Day date is required'],
+            validate: [{
+                validator: (date: string) => moment(date, 'YYYY-MM-DD').format('YYYY-MM-DD') === date,
+                message: 'Date must be formatted in "YYYY-MM-DD"'
+            }, {
+                validator: (date: string) => moment(date).isSameOrBefore(new Date()),
+                message: 'Date can\'t be superior of today'
+            }]
         },
         description: {
             type: Schema.Types.String,
@@ -114,13 +127,32 @@ function createDaySubSchema(container: ServiceContainer) {
                 ref: 'Emotion'
             }],
             required: [true, 'Day emotions are required'],
-            validate: {
-                validator: (emotions: EmotionInstance[]) => emotions.every(emotion => emotion.owner.emotions.includes(emotion)),
-                message: 'Specified emotion is not owned by the user'
-            }
+            validate: [{
+                validator: (emotionIds: string[]) => emotionIds.every(async emotionId => {
+                    const emotion = await container.db.emotions.findById(emotionId).populate('owner');
+                    if (emotion == null) {
+                        return false;
+                    }
+                    await emotion.owner.populate('emotions').execPopulate();
+                    return emotion.owner.emotions.includes(emotion);
+                }),
+                message: 'Invalid emotion'
+            }, {
+                validator: (emotions: EmotionInstance[]) => emotions.length > 0,
+                message: '1 emotion minimum is required'
+            }]
         }
     }, {
-        timestamps: true
+        _id: false,
+        id: false,
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
     });
+
+    schema.method('toDate', function(this: Day): Date {
+        return moment(this.date).toDate();
+    });
+
     return schema;
 }

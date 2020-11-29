@@ -1,6 +1,5 @@
 import mongooseToJson from '@meanie/mongoose-to-json';
 import { Document, Model, Mongoose, Schema } from 'mongoose';
-import autopopulate from 'mongoose-autopopulate';
 import ServiceContainer from '../services/service-container';
 import Attributes from './model';
 import { UserInstance } from './user-model';
@@ -56,13 +55,11 @@ function createEmotionSchema(container: ServiceContainer) {
             validate: {
                 validator: async (ownerId: string) => ownerId != null && container.db.users.exists({ _id: ownerId }),
                 message: 'Invalid owner'
-            },
-            autopopulate: true
+            }
         }
     }, {
         timestamps: true
     });
-    schema.plugin(autopopulate);
     schema.plugin(mongooseToJson);
     return schema;
 }
