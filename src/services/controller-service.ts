@@ -1,4 +1,5 @@
 import { Application } from 'express';
+import AuthenticationController from '../controllers/authentication-controller';
 import Controller from '../controllers/controller';
 import DayController from '../controllers/day-controller';
 import EmotionController from '../controllers/emotion-controller';
@@ -25,6 +26,7 @@ export default class ControllerService extends Service {
     public constructor(container: ServiceContainer) {
         super(container);
         this.controllers = [
+            new AuthenticationController(container),
             new UserController(container),
             new EmotionController(container),
             new DayController(container)
