@@ -38,22 +38,22 @@ function createEmotionSchema(container: ServiceContainer) {
     const schema = new Schema({
         name: {
             type: Schema.Types.String,
-            required: [true, 'Emotion name is required']
+            required: [true, 'Name is required']
         },
         color: {
             type: Schema.Types.String,
-            required: [true, 'Emotion color is required'],
+            required: [true, 'Color is required'],
             validate: {
                 validator: (value: string) => /^#([0-9a-f]{3}){1,2}$/i.test(value),
-                message: 'Invalid emotion color'
+                message: 'Invalid color'
             }
         },
         owner: {
             type: Schema.Types.ObjectId,
             ref: 'User',
-            required: [true, 'Emotion owner is required'],
+            required: [true, 'Owner is required'],
             validate: {
-                validator: async (ownerId: string) => ownerId != null && container.db.users.exists({ _id: ownerId }),
+                validator: async (ownerId: string) => ownerId != null && container.db.users.exists({ _id: ownerId }), // TODO Change `ownerId != null` to ObjectID validation
                 message: 'Invalid owner'
             }
         }

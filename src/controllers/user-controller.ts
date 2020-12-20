@@ -86,6 +86,7 @@ export default class UserController extends Controller {
     public async createHandler(req: Request, res: Response): Promise<Response> {
         try {
             const user = await this.db.users.create({
+                email: req.body.email,
                 name: req.body.name,
                 password: req.body.password
             });
@@ -122,6 +123,9 @@ export default class UserController extends Controller {
                     error: 'not_found',
                     error_description: 'User not found'
                 }));
+            }
+            if (req.body.email != null) {
+                user.email = req.body.email;
             }
             if (req.body.name != null) {
                 user.name = req.body.name;
