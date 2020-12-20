@@ -1,3 +1,4 @@
+import AuthenticationService from './authentication-service';
 import CacheService from './cache-service';
 import ConfigurationService from './configuration-service';
 import ControllerService from './controller-service';
@@ -47,6 +48,7 @@ export default class ServiceContainer {
     private _errors: ErrorService;
     private _cache: CacheService;
     private _scheduler: SchedulerService;
+    private _auth: AuthenticationService;
 
     /**
      * Creates a new services container.
@@ -64,6 +66,7 @@ export default class ServiceContainer {
         this._errors = null;
         this._cache = null;
         this._scheduler = null;
+        this._auth = null;
         this.env.load(); // Autoload environment
     }
 
@@ -161,5 +164,13 @@ export default class ServiceContainer {
             this.log.info('Loaded scheduler service', { type: 'service-container' });
         }
         return this._scheduler;
+    }
+
+    public get auth(): AuthenticationService {
+        if (!this._auth) {
+            this._auth = new AuthenticationService(this);
+            this.log.info('Loaded authentication service', { type: 'service-container' });
+        }
+        return this._auth;
     }
 }
