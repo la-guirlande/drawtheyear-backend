@@ -15,6 +15,7 @@ export interface UserAttributes extends Attributes {
     password: string;
     emotions: EmotionInstance[];
     days: Day[];
+    refreshToken: string;
 }
 
 /**
@@ -76,6 +77,10 @@ function createUserSchema(container: ServiceContainer) {
                 validator: (days: Day[]) => _.uniq(days.map(day => day.date)).length === days.length,
                 message: 'Day already exists'
             }
+        },
+        refreshToken: {
+            type: Schema.Types.String,
+            default: null
         }
     }, {
         timestamps: true,

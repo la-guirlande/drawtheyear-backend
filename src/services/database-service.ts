@@ -1,6 +1,5 @@
 import { Model, Mongoose } from 'mongoose';
 import createEmotionModel, { EmotionInstance } from '../models/emotion-model';
-import createRefreshTokenModel, { RefreshTokenInstance } from '../models/refresh-token-model';
 import createUserModel, { UserInstance } from '../models/user-model';
 import Service from './service';
 import ServiceContainer from './service-container';
@@ -13,7 +12,6 @@ import ServiceContainer from './service-container';
 export default class DatabaseService extends Service {
 
     public readonly users: Model<UserInstance>;
-    public readonly refreshTokens: Model<RefreshTokenInstance>;
     public readonly emotions: Model<EmotionInstance>;
     private readonly mongoose: Mongoose;
 
@@ -26,7 +24,6 @@ export default class DatabaseService extends Service {
         super(container);
         this.mongoose = this.createMongoose();
         this.users = createUserModel(container, this.mongoose);
-        this.refreshTokens = createRefreshTokenModel(container, this.mongoose);
         this.emotions = createEmotionModel(container, this.mongoose);
     }
 
