@@ -10,6 +10,7 @@ import Attributes from './model';
  * User attributes interface.
  */
 export interface UserAttributes extends Attributes {
+    email: string;
     name: string;
     password: string;
     emotions: EmotionInstance[];
@@ -50,10 +51,15 @@ export default function createModel(container: ServiceContainer, mongoose: Mongo
  */
 function createUserSchema(container: ServiceContainer) {
     const schema = new Schema({
+        email: {
+            type: Schema.Types.String,
+            required: [true, 'Email is required'],
+            unique: true
+        },
         name: {
             type: Schema.Types.String,
             required: [true, 'Name is required'],
-            unique: [true, 'Name already exists']
+            unique: true
         },
         password: {
             type: Schema.Types.String,
