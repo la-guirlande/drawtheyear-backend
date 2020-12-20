@@ -55,7 +55,11 @@ function createUserSchema(container: ServiceContainer) {
         email: {
             type: Schema.Types.String,
             required: [true, 'Email is required'],
-            unique: true
+            unique: true,
+            validate: {
+                validator: (email: string) => /\S+@\S+\.\S+/.test(email),
+                message: 'Invalid email'
+            }
         },
         name: {
             type: Schema.Types.String,
@@ -80,7 +84,8 @@ function createUserSchema(container: ServiceContainer) {
         },
         refreshToken: {
             type: Schema.Types.String,
-            default: null
+            default: null,
+            select: false
         }
     }, {
         timestamps: true,
@@ -96,7 +101,7 @@ function createUserSchema(container: ServiceContainer) {
 
     // Password hash validation
     schema.pre('save', async function(this: UserInstance, next) {
-        if (this.password != null) { // Validates the password only if filled
+        if (this.isNew && this.password != null) { // Validates the password only if filled
             try {
                 this.password = await container.crypto.hash(this.password, parseInt(process.env.HASH_SALT, 10));
                 return next();
