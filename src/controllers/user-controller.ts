@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import _ from 'lodash';
-import { Day } from '../models/user-model';
+import { Day, UserInstance } from '../models/user-model';
 import ServiceContainer from '../services/service-container';
 import Controller, { Link } from './controller';
 
@@ -18,6 +18,7 @@ export default class UserController extends Controller {
      */
     public constructor(container: ServiceContainer) {
         super(container, '/users');
+        this.registerEndpoint({ method: 'GET', uri: '/info', handlers: [this.container.auth.authenticateHandler, this.container.auth.isAuthenticatedHandler, this.listHandler] });
         this.registerEndpoint({ method: 'GET', uri: '/', handlers: this.listHandler });
         this.registerEndpoint({ method: 'GET', uri: '/:id', handlers: this.getHandler });
         this.registerEndpoint({ method: 'POST', uri: '/', handlers: this.createHandler });
@@ -31,6 +32,30 @@ export default class UserController extends Controller {
         this.registerEndpoint({ method: 'PUT', uri: '/:id/days/:date', handlers: this.modifyDayHandler });
         this.registerEndpoint({ method: 'PATCH', uri: '/:id/days/:date', handlers: this.updateDayHandler });
         this.registerEndpoint({ method: 'DELETE', uri: '/:id/days/:date', handlers: this.deleteDayHandler });
+    }
+
+    /**
+     * Returns the authenticated user.
+     * 
+     * Path : `GET /users/info`
+     * 
+     * @param req Express request
+     * @param res Express response
+     * @async
+     */
+    public async infoHandler(req: Request, res: Response): Promise<Response> {
+        try {
+            const user = await this.db.users.findById((res.locals.authUser as UserInstance).id).populate('emotions');
+            if (user == null) {
+                return res.status(404).send(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'User not found'
+                }));
+            }
+            return res.status(200).send({ user });
+        } catch (err) {
+            return res.status(500).send(this.container.errors.formatServerError());
+        }
     }
 
     /**
