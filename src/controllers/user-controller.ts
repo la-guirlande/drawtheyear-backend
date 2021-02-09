@@ -69,7 +69,7 @@ export default class UserController extends Controller {
      */
     public async listHandler(req: Request, res: Response): Promise<Response> {
         try {
-            return res.status(200).send({ users: await this.db.users.find().populate('emotions') });
+            return res.status(200).send({ users: await this.db.users.find(req.query).populate('emotions').populate('days.emotions') });
         } catch (err) {
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -217,7 +217,7 @@ export default class UserController extends Controller {
                     error_description: 'User not found'
                 }));
             }
-            return res.status(200).json({ emotions: user.emotions });
+            return res.status(200).json({ emotions: await this.db.emotions.find(req.query) });
         } catch (err) {
             return res.status(500).json(this.container.errors.formatServerError());
         }
@@ -241,7 +241,7 @@ export default class UserController extends Controller {
                     error_description: 'User not found'
                 }));
             }
-            const emotion = user.emotions.find(currentEmotion => currentEmotion.id === req.params.emotionId);
+            const emotion = await this.db.emotions.findById(req.params.emotionId);
             if (emotion == null) {
                 return res.status(404).json(this.container.errors.formatErrors({
                     error: 'not_found',
