@@ -11,6 +11,9 @@ build/
 config/*
 !config/*.example.yml
 
+# Storage
+files/*
+
 # Logs
 logs/
 
