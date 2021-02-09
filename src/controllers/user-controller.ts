@@ -20,7 +20,9 @@ export default class UserController extends Controller {
      */
     public constructor(container: ServiceContainer) {
         super(container, '/users');
-        const upload = multer();
+        const upload = multer({
+            limits: { fileSize: this.container.config.api.uploadFileSizeLimit * 1024 * 1024 }
+        });
         this.registerEndpoint({ method: 'GET', uri: '/info', handlers: [this.container.auth.authenticateHandler, this.container.auth.isAuthenticatedHandler, this.infoHandler] });
         this.registerEndpoint({ method: 'GET', uri: '/', handlers: this.listHandler });
         this.registerEndpoint({ method: 'GET', uri: '/:id', handlers: this.getHandler });
