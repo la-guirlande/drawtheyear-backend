@@ -35,7 +35,7 @@ export default class EmotionController extends Controller {
      */
     public async listHandler(req: Request, res: Response): Promise<Response> {
         try {
-            return res.status(200).json({ emotions: await this.db.emotions.find().populate('owner') });
+            return res.status(200).json({ emotions: await this.db.emotions.find(req.query).populate('owner') });
         } catch (err) {
             return res.status(500).send(this.container.errors.formatServerError());
         }
