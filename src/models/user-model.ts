@@ -25,7 +25,16 @@ export interface Day {
     date: string;
     description: string;
     emotions: EmotionInstance[];
+    attachments: Attachment[];
     toDate?(): Date;
+}
+
+/**
+ * Attachment interface.
+ */
+export interface Attachment {
+    type: 'link' | 'file';
+    url: string;
 }
 
 /**
@@ -157,6 +166,12 @@ function createDaySubSchema(container: ServiceContainer) {
                 validator: (emotions: EmotionInstance[]) => emotions.length > 0,
                 message: '1 emotion minimum is required'
             }]
+        },
+        attachments: {
+            type: [{
+                type: createAttachmentSubSchema()
+            }],
+            default: []
         }
     }, {
         _id: false,
@@ -170,5 +185,28 @@ function createDaySubSchema(container: ServiceContainer) {
         return moment(this.date).toDate();
     });
 
+    return schema;
+}
+
+/**
+ * Creates the attachment subschema.
+ * 
+ * @returns Attachment subschema
+ */
+function createAttachmentSubSchema() {
+    const schema = new Schema({
+        type: {
+            type: Schema.Types.String,
+            enum: ['link', 'file'],
+            default: 'link'
+        },
+        url: {
+            type: Schema.Types.String,
+            required: [true, 'Attachment URL is required']
+        }
+    }, {
+        _id: false,
+        id: false
+    });
     return schema;
 }

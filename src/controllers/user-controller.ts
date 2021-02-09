@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
 import _ from 'lodash';
-import { Day, UserInstance } from '../models/user-model';
+import multer from 'multer';
+import { Attachment, Day, UserInstance } from '../models/user-model';
 import ServiceContainer from '../services/service-container';
 import Controller, { Link } from './controller';
 
@@ -18,6 +20,7 @@ export default class UserController extends Controller {
      */
     public constructor(container: ServiceContainer) {
         super(container, '/users');
+        const upload = multer();
         this.registerEndpoint({ method: 'GET', uri: '/info', handlers: [this.container.auth.authenticateHandler, this.container.auth.isAuthenticatedHandler, this.infoHandler] });
         this.registerEndpoint({ method: 'GET', uri: '/', handlers: this.listHandler });
         this.registerEndpoint({ method: 'GET', uri: '/:id', handlers: this.getHandler });
@@ -32,6 +35,9 @@ export default class UserController extends Controller {
         this.registerEndpoint({ method: 'PUT', uri: '/:id/days/:date', handlers: this.modifyDayHandler });
         this.registerEndpoint({ method: 'PATCH', uri: '/:id/days/:date', handlers: this.updateDayHandler });
         this.registerEndpoint({ method: 'DELETE', uri: '/:id/days/:date', handlers: this.deleteDayHandler });
+        this.registerEndpoint({ method: 'POST', uri: '/:id/days/:date/attachments/link', handlers: this.addAttachmentLinkHandler });
+        this.registerEndpoint({ method: 'POST', uri: '/:id/days/:date/attachments/file', handlers: [upload.single('attachment'), this.addAttachmentFileHandler] });
+        this.registerEndpoint({ method: 'DELETE', uri: '/:id/days/:date/attachments/:attachmentIndex', handlers: this.deleteAttachmentHandler });
     }
 
     /**
@@ -330,7 +336,8 @@ export default class UserController extends Controller {
             const day: Day = {
                 date: req.body.date,
                 description: req.body.description,
-                emotions: req.body.emotions
+                emotions: req.body.emotions,
+                attachments: []
             };
             user.days.push(day);
             await user.save();
@@ -474,6 +481,153 @@ export default class UserController extends Controller {
             if (err.name === 'ValidationError') {
                 return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
             }
+            return res.status(500).send(this.container.errors.formatServerError());
+        }
+    }
+
+    /**
+     * Adds a new link attachment for a day.
+     * 
+     * Path : `POST /users/:id/days/:date/attachments/link`
+     * 
+     * @param req Express request
+     * @param res Express response
+     * @async
+     */
+    public async addAttachmentLinkHandler(req: Request, res: Response): Promise<Response> {
+        try {
+            const user = await this.db.users.findById(req.params.id);
+            if (user == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'User not found'
+                }));
+            }
+            const day = user.days.find(currentDay => currentDay.date === req.params.date);
+            if (day == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'Day not found'
+                }));
+            }
+            const attachment: Attachment = {
+                type: 'link',
+                url: req.body.url
+            };
+            if (day.attachments.some(currentAttachment => currentAttachment.type === attachment.type && currentAttachment.url === attachment.url)) {
+                return res.status(400).json(this.container.errors.formatErrors({
+                    error: 'invalid_request',
+                    error_description: 'Attachment already exists'
+                }));
+            }
+            day.attachments.push(attachment);
+            await user.save();
+            return res.status(201).send();
+        } catch (err) {
+            if (err.name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            }
+            return res.status(500).send(this.container.errors.formatServerError());
+        }
+    }
+
+    /**
+     * Adds a new file attachment for a day.
+     * 
+     * Path : `POST /users/:id/days/:date/attachments/file`
+     * 
+     * @param req Express request
+     * @param res Express response
+     * @async
+     */
+    public async addAttachmentFileHandler(req: Request, res: Response): Promise<Response> {
+        try {
+            const user = await this.db.users.findById(req.params.id);
+            if (user == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'User not found'
+                }));
+            }
+            const day = user.days.find(currentDay => currentDay.date === req.params.date);
+            if (day == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'Day not found'
+                }));
+            }
+            if (!req.file) {
+                return res.status(400).json(this.container.errors.formatErrors({
+                    error: 'invalid_request',
+                    error_description: 'Missing attachment file'
+                }));
+            }
+            const dir = `files/${user.id}/${day.date}`;
+            const path = `${dir}/${req.file.originalname}`;
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(path, req.file.buffer);
+            const attachment: Attachment = {
+                type: 'file',
+                url: path
+            };
+            if (day.attachments.some(currentAttachment => currentAttachment.type === attachment.type && currentAttachment.url === attachment.url)) {
+                return res.status(400).json(this.container.errors.formatErrors({
+                    error: 'invalid_request',
+                    error_description: 'Attachment already exists'
+                }));
+            }
+            day.attachments.push(attachment);
+            await user.save();
+            return res.status(201).send();
+        } catch (err) {
+            if (err.name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            }
+            return res.status(500).send(this.container.errors.formatServerError());
+        }
+    }
+
+    /**
+     * Deletes an attachment of a day.
+     * 
+     * Path : `DELETE /users/:id/days/:date/attachments/:attachmentIndex`
+     * 
+     * @param req Express request
+     * @param res Express response
+     * @async
+     */
+    public async deleteAttachmentHandler(req: Request, res: Response): Promise<Response> {
+        try {
+            const user = await this.db.users.findById(req.params.id);
+            if (user == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'User not found'
+                }));
+            }
+            const day = user.days.find(currentDay => currentDay.date === req.params.date);
+            if (day == null) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'Day not found'
+                }));
+            }
+            const attachmentIndex = parseInt(req.params.attachmentIndex);
+            if (attachmentIndex < 0 || attachmentIndex >= day.attachments.length) {
+                return res.status(404).json(this.container.errors.formatErrors({
+                    error: 'not_found',
+                    error_description: 'Attachment not found'
+                }));
+            }
+            const attachment = day.attachments[attachmentIndex];
+            if (attachment.type === 'file') {
+                fs.unlinkSync(attachment.url);
+            }
+            day.attachments.splice(attachmentIndex, 1);
+            user.markModified('days');
+            await user.save();
+            return res.status(204).send();
+        } catch (err) {
             return res.status(500).send(this.container.errors.formatServerError());
         }
     }
