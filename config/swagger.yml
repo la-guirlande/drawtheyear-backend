@@ -1,0 +1,832 @@
+openapi: 3.0.0
+info:
+  description: Swagger
+  version: 1.0.0-oas3
+  title: DrawTheYear API documentation
+  termsOfService: 'https://drawtheyear.com/terms'
+  contact:
+    email: support@drawtheyear.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: auth
+    description: Authentication
+  - name: users
+    description: Everything about users
+  - name: emotions
+    description: Everything about emotions
+  - name: days
+    description: Everything about days
+paths:
+  /auth/accessToken:
+    post:
+      tags:
+        - auth
+      summary: Access token generation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+        required: true
+      responses:
+        '200':
+          description: Access token generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+        '404':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /auth/refreshToken:
+    post:
+      tags:
+        - auth
+      summary: Refresh token and access token generation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+        required: true
+      responses:
+        '200':
+          description: Refresh token and access token generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '404':
+          description: Email not found or invalid password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /users/info:
+    get:
+      tags:
+        - users
+      summary: Get the user from a provided token
+      parameters:
+        - in: header
+          name: x-access-token
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '403':
+          description: Invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /users:
+    get:
+      tags:
+        - users
+      summary: List users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    post:
+      tags:
+        - users
+      summary: Create user
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /users/{userId}:
+    parameters:
+      - in: path
+        name: userId
+        schema:
+          type: integer
+        required: true
+    get:
+      tags:
+        - users
+      summary: Get specific user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    patch:
+      tags:
+        - users
+      summary: Update user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                name:
+                  type: string
+                password:
+                  type: string
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    delete:
+      tags:
+        - users
+      summary: Delete user
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /users/{userId}/days:
+    parameters:
+      - in: path
+        name: userId
+        schema:
+          type: integer
+        required: true
+    get:
+      tags:
+        - users
+      summary: List days of user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Day'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    post:
+      tags:
+        - users
+      summary: Create day for user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                emotions:
+                  type: string
+                description:
+                  type: string
+        required: true
+      responses:
+        '201':
+          description: Day created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /users/{userId}/days/{date}:
+    parameters:
+      - in: path
+        name: userId
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: date
+        schema:
+          type: string
+        required: true
+    get:
+      tags:
+        - users
+      summary: Get day of user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Day'
+        '404':
+          description: User or day not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    put:
+      tags:
+        - users
+      summary: Modify day for user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                emotions:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    patch:
+      tags:
+        - users
+      summary: Update day for user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                emotions:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    delete:
+      tags:
+        - users
+      summary: Delete day for user
+      responses:
+        '204':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /emotions:
+    get:
+      tags:
+        - emotions
+      summary: List emotions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Emotion'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    post:
+      tags:
+        - emotions
+      summary: Create emotion
+      responses:
+        '201':
+          description: Emotion created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /emotions/{emotionId}:
+    parameters:
+      - in: path
+        name: emotionId
+        schema:
+          type: integer
+        required: true
+    get:
+      tags:
+        - emotions
+      summary: Get specific emotion
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  emotion:
+                    $ref: '#/components/schemas/Emotion'
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '404':
+          description: Emotion not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    put:
+      tags:
+        - emotions
+      summary: Modify emotion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                color:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '404':
+          description: Emotion not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    patch:
+      tags:
+        - emotions
+      summary: Update emotion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                color:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '404':
+          description: Emotion not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    delete:
+      tags:
+        - emotions
+      summary: Delete emotion
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Emotion not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /days:
+    get:
+      tags:
+        - days
+      summary: List days
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Day'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+  /days/{date}:
+    parameters:
+      - in: path
+        name: date
+        schema:
+          type: integer
+        required: true
+    get:
+      tags:
+        - days
+      summary: List days by date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Day'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrors'
+    
+servers:
+  - url: 'https://api.drawtheyear.com'
+  - url: 'http://localhost'
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+          default: user
+    Emotion:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        owner:
+          $ref: '#/components/schemas/User'
+    Day:
+      type: object
+      properties:
+        date:
+          type: string
+        description:
+          type: string
+        emotions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Emotion'
+    APIErrors:
+      type: array
+      items:
+        type: object
+        properties:
+          error:
+            type: string
+          error_description:
+            type: string
+    Links:
+      type: array
+      items:
+        type: object
+        properties:
+          rel:
+            type: string
+          action:
+            type: string
+            enum:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+          href:
+            type: string
