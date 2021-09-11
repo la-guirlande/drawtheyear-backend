@@ -90,8 +90,8 @@ export default class EmotionController extends Controller {
                 }] as Link[]
             });
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -126,8 +126,8 @@ export default class EmotionController extends Controller {
                 }] as Link[]
             });
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -166,8 +166,8 @@ export default class EmotionController extends Controller {
                 }] as Link[]
             });
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
