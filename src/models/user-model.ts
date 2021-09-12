@@ -1,4 +1,4 @@
-import mongooseToJson from '@meanie/mongoose-to-json';
+const mongooseToJson = require('@meanie/mongoose-to-json');
 import _ from 'lodash';
 import moment from 'moment';
 import { Document, Model, Mongoose, Schema } from 'mongoose';
@@ -50,7 +50,7 @@ export interface UserInstance extends UserAttributes, Document {
  * @param mongoose Mongoose instance
  */
 export default function createModel(container: ServiceContainer, mongoose: Mongoose): Model<UserInstance> {
-    return mongoose.model('User', createUserSchema(container), 'users');
+    return mongoose.model<UserInstance>('User', createUserSchema(container), 'users');
 }
 
 /**
@@ -115,7 +115,7 @@ function createUserSchema(container: ServiceContainer) {
                 this.password = await container.crypto.hash(this.password, parseInt(process.env.HASH_SALT, 10));
                 return next();
             } catch (err) {
-                return next(err);
+                return next(err as Error);
             }
         }
     });
@@ -179,10 +179,6 @@ function createDaySubSchema(container: ServiceContainer) {
         timestamps: true,
         toJSON: { virtuals: true },
         toObject: { virtuals: true }
-    });
-
-    schema.method('toDate', function(this: Day): Date {
-        return moment(this.date).toDate();
     });
 
     return schema;

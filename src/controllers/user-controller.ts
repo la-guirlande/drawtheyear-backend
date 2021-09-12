@@ -117,6 +117,7 @@ export default class UserController extends Controller {
      * @async
      */
     public async createHandler(req: Request, res: Response): Promise<Response> {
+
         try {
             const user = await this.db.users.create({
                 email: req.body.email,
@@ -132,8 +133,8 @@ export default class UserController extends Controller {
                 }] as Link[]
             });
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -176,8 +177,8 @@ export default class UserController extends Controller {
                 }] as Link[]
             });
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -352,8 +353,8 @@ export default class UserController extends Controller {
                 }] as Link[]
             });
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -396,8 +397,8 @@ export default class UserController extends Controller {
                 }] as Link[]
             });
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -444,8 +445,8 @@ export default class UserController extends Controller {
                 }] as Link[]
             });
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -480,8 +481,8 @@ export default class UserController extends Controller {
             await user.save();
             return res.status(204).send();
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -526,8 +527,8 @@ export default class UserController extends Controller {
             await user.save();
             return res.status(201).send();
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }
@@ -582,8 +583,8 @@ export default class UserController extends Controller {
             await user.save();
             return res.status(201).send();
         } catch (err) {
-            if (err.name === 'ValidationError') {
-                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+            if ((err as Error).name === 'ValidationError') {
+                return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err as any)));
             }
             return res.status(500).send(this.container.errors.formatServerError());
         }

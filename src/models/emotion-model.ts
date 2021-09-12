@@ -1,4 +1,4 @@
-import mongooseToJson from '@meanie/mongoose-to-json';
+const mongooseToJson = require('@meanie/mongoose-to-json');
 import { Document, Model, Mongoose, Schema } from 'mongoose';
 import ServiceContainer from '../services/service-container';
 import Attributes from './model';
@@ -25,7 +25,7 @@ export interface EmotionInstance extends EmotionAttributes, Document {}
  * @param mongoose Mongoose instance
  */
 export default function createModel(container: ServiceContainer, mongoose: Mongoose): Model<EmotionInstance> {
-    return mongoose.model('Emotion', createEmotionSchema(container), 'emotions');
+    return mongoose.model<EmotionInstance>('Emotion', createEmotionSchema(container), 'emotions');
 }
 
 /**
