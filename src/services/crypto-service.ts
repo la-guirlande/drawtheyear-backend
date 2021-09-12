@@ -50,7 +50,7 @@ export default class CryptoService extends Service {
    * @param length String length
    */
   public generateRandomString(length: number = 10): string {
-    return randomString({ type: 'alphanumeric', length });
+    return randomString({ type: 'base64', length });
   }
 
   /**
