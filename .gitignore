@@ -7,9 +7,6 @@ build/
 # Environment
 .env
 
-# Storage
-files/*
-
 # Logs
 logs/
 

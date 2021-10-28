@@ -1,2 +1,1 @@
-# DrawTheYear API
-(WIP)
+# DrawTheYear - Backend

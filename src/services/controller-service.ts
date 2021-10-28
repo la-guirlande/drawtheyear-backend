@@ -1,8 +1,6 @@
 import { Application } from 'express';
 import AuthenticationController from '../controllers/authentication-controller';
 import Controller from '../controllers/controller';
-import DayController from '../controllers/day-controller';
-import EmotionController from '../controllers/emotion-controller';
 import UserController from '../controllers/user-controller';
 import Service from './service';
 import ServiceContainer from './service-container';
@@ -16,36 +14,34 @@ import ServiceContainer from './service-container';
  */
 export default class ControllerService extends Service {
 
-    public readonly controllers: Controller[];
+  public readonly controllers: Controller[];
 
-    /**
-     * Creates a new controllers service.
-     * 
-     * @param container Services container
-     */
-    public constructor(container: ServiceContainer) {
-        super(container);
-        this.controllers = [
-            new AuthenticationController(container),
-            new UserController(container),
-            new EmotionController(container),
-            new DayController(container)
-        ];
-    }
+  /**
+   * Creates a new controllers service.
+   * 
+   * @param container Services container
+   */
+  public constructor(container: ServiceContainer) {
+    super(container);
+    this.controllers = [
+      new AuthenticationController(container),
+      new UserController(container)
+    ];
+  }
 
-    /**
-     * Register all controllers.
-     * 
-     * @param app Express application
-     */
-    public registerControllers(app: Application): void {
-        this.controllers.forEach(controller => {
-            app.use(controller.rootUri, controller.router);
-            this.logger.info(`Registered controller ${controller.constructor.name} - "${controller.rootUri}"`);
-            controller.endpoints.forEach(endpoint => {
-                const description = (endpoint.description !== undefined) ? ` (${endpoint.description})` : '';
-                this.logger.info(`    - ${endpoint.method} "${controller.rootUri}${endpoint.uri}"${description}`);
-            });
-        });
-    }
+  /**
+   * Register all controllers.
+   * 
+   * @param app Express application
+   */
+  public registerControllers(app: Application): void {
+    this.controllers.forEach(controller => {
+      app.use(controller.rootUri, controller.router);
+      this.logger.info(`Registered controller ${controller.constructor.name} - "${controller.rootUri}"`);
+      controller.endpoints.forEach(endpoint => {
+        const description = (endpoint.description !== undefined) ? ` (${endpoint.description})` : '';
+        this.logger.info(`    - ${endpoint.method} "${controller.rootUri}${endpoint.uri}"${description}`);
+      });
+    });
+  }
 }

@@ -1,3 +1,1 @@
-requestSizeLimit: "10mb"
-uploadFileSizeLimit: 30
-documentationRoute: "/docs"
+documentationRoute: null
