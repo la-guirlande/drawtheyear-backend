@@ -22,16 +22,15 @@ export interface UserInstance extends UserAttributes, Document {}
  * @param mongoose Mongoose instance
  */
 export default function createModel(container: ServiceContainer, mongoose: Mongoose): Model<UserInstance> {
-  return mongoose.model('User', createUserSchema(container), 'users');
+  return mongoose.model('User', createUserSchema(), 'users');
 }
 
 /**
  * Creates the user schema.
  * 
- * @param container Services container
  * @returns User schema
  */
-function createUserSchema(container: ServiceContainer) {
+function createUserSchema() {
   const schema = new Schema<UserInstance>({
     googleId: {
       type: Schema.Types.String,
