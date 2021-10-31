@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { UserInstance } from '../models/user-model';
+import { UserModel } from '../models/user-model';
 import ServiceContainer from '../services/service-container';
 import Controller from './controller';
 
@@ -33,7 +33,7 @@ export default class UserController extends Controller {
    */
   public async infoHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const authUser: UserInstance = res.locals.authUser;
+      const authUser: UserModel = res.locals.authUser;
       if (authUser == null) {
         return res.status(404).json(this.container.errors.formatErrors({
           error: 'not_found',
