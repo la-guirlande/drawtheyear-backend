@@ -1,13 +1,13 @@
 import _ from 'lodash';
 import { Document, Model, Mongoose, Schema, Types } from 'mongoose';
 import ServiceContainer from '../services/service-container';
-import Attributes from './model';
+import Attributes, { DeletedAttributes, deletedPlugin } from './model';
 const mongooseToJson = require('@meanie/mongoose-to-json');
 
 /**
  * User attributes.
  */
-export interface User extends Attributes {
+export interface User extends Attributes, DeletedAttributes {
   googleId: string;
   emotions: Emotion[];
 }
@@ -27,7 +27,8 @@ export interface UserModel extends Model<UserDocument> {
 /**
  * Emotion attributes.
  */
-export interface Emotion {
+export interface Emotion extends Attributes, DeletedAttributes {
+  id: string;
   name: string;
   color: string;
 }
@@ -74,6 +75,7 @@ function createUserSchema() {
   });
 
   schema.plugin(mongooseToJson);
+  schema.plugin(deletedPlugin);
 
   return schema;
 }
@@ -97,9 +99,10 @@ function createEmotionSchema() {
       match: [/#([a-f0-9]{3}){1,2}\b/i, 'Invalid emotion color']
     }
   }, {
-    _id: false,
-    id: false,
     timestamps: true
   });
+
+  schema.plugin(deletedPlugin);
+
   return schema;
 }
