@@ -1,5 +1,6 @@
 import _ from 'lodash';
-import { Document, Model, Mongoose, Schema, Types } from 'mongoose';
+import { Document, Model, Mongoose, Schema } from 'mongoose';
+import { Permission, Role } from '../services/permission-service';
 import ServiceContainer from '../services/service-container';
 import Attributes, { DeletedAttributes, deletedPlugin } from './model';
 const mongooseToJson = require('@meanie/mongoose-to-json');
@@ -9,6 +10,7 @@ const mongooseToJson = require('@meanie/mongoose-to-json');
  */
 export interface User extends Attributes, DeletedAttributes {
   googleId: string;
+  role: Role;
   emotions: Emotion[];
 }
 
@@ -21,7 +23,7 @@ export interface UserDocument extends User, Document {}
  * User model.
  */
 export interface UserModel extends Model<UserDocument> {
-  getEmotions: () => Promise<Emotion[]>;
+  hasPermission(perm: string): boolean;
 }
 
 /**
@@ -40,20 +42,26 @@ export interface Emotion extends Attributes, DeletedAttributes {
  * @param mongoose Mongoose instance
  */
 export default function createModel(container: ServiceContainer, mongoose: Mongoose) {
-  return mongoose.model<UserDocument, UserModel>('User', createUserSchema(), 'users');
+  return mongoose.model<UserDocument, UserModel>('User', createUserSchema(container), 'users');
 }
 
 /**
  * Creates the user schema.
  * 
+ * @param container Services container
  * @returns User schema
  */
-function createUserSchema() {
+function createUserSchema(container: ServiceContainer) {
   const schema = new Schema<UserDocument, UserModel>({
     googleId: {
       type: Schema.Types.String,
       required: [true, 'Google ID is required'],
       unique: true
+    },
+    role: {
+      type: Schema.Types.String,
+      enum: Object.keys(container.config.services.permissions.roles),
+      default: container.permissions.defaultRole
     },
     emotions: {
       type: [{
@@ -72,6 +80,10 @@ function createUserSchema() {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
+  });
+
+  schema.method('hasPermission', function(this: UserDocument, perm: Permission) {
+    return container.permissions.getPermissions(this.role).includes(perm);
   });
 
   schema.plugin(mongooseToJson);

@@ -1,5 +1,6 @@
 import { Mongoose } from 'mongoose';
 import createUserModel, { UserModel } from '../models/user-model';
+import UserModelRequest from '../models/user-model-request';
 import Service from './service';
 import ServiceContainer from './service-container';
 
@@ -11,6 +12,7 @@ import ServiceContainer from './service-container';
 export default class DatabaseService extends Service {
 
   public readonly users: UserModel;
+  public readonly userMR: UserModelRequest;
   private readonly mongoose: Mongoose;
 
   /**
@@ -22,6 +24,7 @@ export default class DatabaseService extends Service {
     super(container);
     this.mongoose = this.createMongoose();
     this.users = createUserModel(container, this.mongoose);
+    this.userMR = new UserModelRequest(container);
   }
 
   /**
