@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import moment from 'moment';
 import { Document, Model, Mongoose, Schema } from 'mongoose';
 import { Permission, Role } from '../services/permission-service';
 import ServiceContainer from '../services/service-container';
@@ -12,6 +13,7 @@ export interface User extends Attributes, DeletedAttributes {
   googleId: string;
   role: Role;
   emotions: Emotion[];
+  days: Day[];
 }
 
 /**
@@ -33,6 +35,14 @@ export interface Emotion extends Attributes, DeletedAttributes {
   id: string;
   name: string;
   color: string;
+}
+
+/**
+ * Day attributes.
+ */
+export interface Day extends Attributes {
+  date: string;
+  description: string;
 }
 
 /**
@@ -69,12 +79,27 @@ function createUserSchema(container: ServiceContainer) {
       }],
       default: [],
       validate: [{
-        validator: (emotions: Emotion[]) => emotions.length <= 1000,
+        validator: (emotions: Emotion[]) => emotions.filter(emotion => !emotion.deleted).length <= 1000,
         message: 'Too many emotions'
       }, {
-        validator: (emotions: Emotion[]) => _.uniq(emotions.map(emotion => emotion.name)).length === emotions.length,
+        validator: (emotions: Emotion[]) => {
+          const activeEmotions = emotions.filter(emotion => !emotion.deleted);
+          _.uniq(activeEmotions.map(emotion => emotion.name)).length === activeEmotions.length
+        },
         message: 'Emotion name already exists'
-      }]
+      }],
+      select: false
+    },
+    days: {
+      type: [{
+        type: createDaySchema()
+      }],
+      default: [],
+      validate: {
+        validator: (days: Day[]) => _.uniq(days.map(day => day.date)).length === days.length,
+        message: 'Day already exists'
+      },
+      select: false
     }
   }, {
     timestamps: true,
@@ -114,7 +139,41 @@ function createEmotionSchema() {
     timestamps: true
   });
 
+  schema.plugin(mongooseToJson);
   schema.plugin(deletedPlugin);
 
+  return schema;
+}
+
+/**
+ * Creates the day subschema.
+ * 
+ * @returns Day subschema
+ */
+function createDaySchema() {
+  const schema = new Schema<Day>({
+    date: {
+      type: Schema.Types.String,
+      required: [true, 'Day date is required'],
+      // eslint-disable-next-line no-useless-escape
+      match: [/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/, 'Invalid day date format'],
+      validate: {
+        validator: (date: string) => {
+          const realDate = moment(date);
+          return realDate.isValid() && realDate.isBefore(moment()) && realDate.isAfter(moment('2000-01-01'));
+        },
+        message: 'Invalid day date'
+      }
+    },
+    description: {
+      type: Schema.Types.String,
+      maxlength: [100000, 'Day description is too long'],
+      default: null
+    }
+  }, {
+    _id: false,
+    id: false,
+    timestamps: true
+  });
   return schema;
 }
