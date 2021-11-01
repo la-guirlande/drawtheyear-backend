@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
 import ServiceContainer from '../services/service-container';
+import { AccessTokenData } from '../services/token-service';
 import Controller from './controller';
 
 /**
@@ -30,8 +31,9 @@ export default class AuthenticationController extends Controller {
    */
   public async accessToken(req: Request, res: Response): Promise<Response> {
     try {
-      const response = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', { headers: { Authorization: res.getHeader('Authorization') as string } });
-      return res.status(200).json(); // TODO Check if the user is correct with Google API
+      // const response = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', { headers: { Authorization: res.getHeader('Authorization') as string } });
+      const accessToken = await this.container.tokens.encode<AccessTokenData>({ userId: '61800662d3d31572ebf83c92' }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '100d' });
+      return res.status(200).json({ access_token: accessToken }); // TODO Check if the user is correct with Google API
     } catch (err) {
       this.logger.error(err);
       return res.status(500).json(this.container.errors.formatServerError());
