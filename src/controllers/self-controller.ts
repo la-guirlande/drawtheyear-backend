@@ -32,7 +32,10 @@ export default class SelfController extends Controller {
    */
    public async infoHandler(req: Request, res: Response): Promise<Response> {
     try {
-      return res.status(200).json({ user: res.locals.authUser });
+      const authUser: UserDocument = res.locals.authUser;
+      authUser.deleted = undefined;
+      authUser.emotions = undefined;
+      return res.status(200).json({ user: authUser });
     } catch (err) {
       this.logger.error(err);
       return res.status(500).send(this.container.errors.formatServerError());
@@ -48,7 +51,9 @@ export default class SelfController extends Controller {
    */
   public async listEmotionsHandler(req: Request, res: Response): Promise<Response> {
     try {
-      return res.status(200).send({ emotions: (res.locals.authUser as UserDocument).emotions.filter(emotion => !emotion.deleted) });
+      const emotions = (res.locals.authUser as UserDocument).emotions.filter(emotion => !emotion.deleted);
+      emotions.forEach(emotion => emotion.deleted = undefined);
+      return res.status(200).send({ emotions });
     } catch (err) {
       this.logger.error(err);
       return res.status(500).send(this.container.errors.formatServerError());
