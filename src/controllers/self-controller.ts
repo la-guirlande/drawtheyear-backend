@@ -37,6 +37,12 @@ export default class SelfController extends Controller {
           error_description: 'User not found'
         }));
       }
+      if (!authUser.hasPermission('own.read')) {
+        return res.status(403).json(this.container.errors.formatErrors({
+          error: 'forbidden',
+          error_description: 'Permission denied'
+        }));
+      }
       return res.status(200).json({ user: authUser });
     } catch (err) {
       this.logger.error(err);

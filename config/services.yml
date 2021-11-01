@@ -13,11 +13,15 @@ permissions:
     user:
       default: true
       permissions:
-        - 'abcd'
-        - '1234'
+        - 'own.read'
+        - 'own.write'
+        - 'own.emotion.read'
+        - 'own.emotion.write'
     admin:
       extends:
         - user
       permissions:
-        - 'efgh'
-        - '5678'
+        - 'user.read'
+        - 'user.write'
+        - 'user.emotion.read'
+        - 'user.emotion.write'

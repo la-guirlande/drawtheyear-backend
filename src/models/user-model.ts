@@ -17,14 +17,14 @@ export interface User extends Attributes, DeletedAttributes {
 /**
  * User document.
  */
-export interface UserDocument extends User, Document {}
+export interface UserDocument extends User, Document {
+  hasPermission(perm: Permission): boolean;
+}
 
 /**
  * User model.
  */
-export interface UserModel extends Model<UserDocument> {
-  hasPermission(perm: string): boolean;
-}
+export interface UserModel extends Model<UserDocument> {}
 
 /**
  * Emotion attributes.
