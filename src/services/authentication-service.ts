@@ -39,12 +39,12 @@ export default class AuthenticationService extends Service {
     if (token != null) {
       try {
         const data = await this.container.tokens.decode<AccessTokenData>(token, process.env.ACCESS_TOKEN_KEY);
-        const user = await this.container.db.users.findById(data.userId);
+        const user = await this.container.db.users.findById(data.userId).where('deleted').equals(false).select('-emotions');
         if (user != null) {
           res.locals.authUser = user;
         }
       } catch (err) {
-        this.logger.error('Could not authenticate :', err.message);
+        this.logger.error('Could not authenticate :', (err as Error).message);
       }
     }
     return next();
