@@ -105,5 +105,14 @@ export interface ServicesConfiguration {
   };
   express: {
     requestSizeLimit: string;
-  }
+  };
+  permissions: {
+    roles: {
+      [role: string]: {
+        default?: boolean;
+        extends?: string[];
+        permissions: string[];
+      }
+    }
+  };
 }

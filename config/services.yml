@@ -8,3 +8,16 @@ cache:
   useClones: false
 express:
   requestSizeLimit: 50mb
+permissions:
+  roles:
+    user:
+      default: true
+      permissions:
+        - 'abcd'
+        - '1234'
+    admin:
+      extends:
+        - user
+      permissions:
+        - 'efgh'
+        - '5678'
