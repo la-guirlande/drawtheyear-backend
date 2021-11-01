@@ -25,6 +25,10 @@ export default class UserController extends Controller {
     this.registerEndpoint({ method: 'POST', uri: '/:id/emotions', handlers: this.createEmotionHandler });
     this.registerEndpoint({ method: 'PATCH', uri: '/:id/emotions/:emotionId', handlers: this.updateEmotionHandler });
     this.registerEndpoint({ method: 'DELETE', uri: '/:id/emotions/:emotionId', handlers: this.deleteEmotionHandler });
+    this.registerEndpoint({ method: 'GET', uri: '/:id/days', handlers: this.listDaysHandler });
+    this.registerEndpoint({ method: 'POST', uri: '/:id/days', handlers: this.createDayHandler });
+    this.registerEndpoint({ method: 'PATCH', uri: '/:id/days/:date', handlers: this.updateDayhandler });
+    this.registerEndpoint({ method: 'DELETE', uri: '/:id/days/:date', handlers: this.deleteDayHandler });
   }
 
   /**
@@ -38,7 +42,7 @@ export default class UserController extends Controller {
    */
   public async listHandler(req: Request, res: Response): Promise<Response> {
     try {
-      return res.status(200).send({ users: await this.db.users.find().where('deleted').equals(false).select('-emotions') });
+      return res.status(200).send({ users: await this.db.users.find().where('deleted').equals(false) });
     } catch (err) {
       this.logger.error(err);
       return res.status(500).send(this.container.errors.formatServerError());
@@ -56,7 +60,7 @@ export default class UserController extends Controller {
    */
   public async getHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('-emotions');
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false);
       if (user == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
@@ -98,7 +102,9 @@ export default class UserController extends Controller {
   }
 
   /**
-   * Lists all user's emotions.
+   * Lists emotions.
+   * 
+   * Path : `GET /users/:id/emotions`
    * 
    * @param req Express request
    * @param res Express response
@@ -106,7 +112,7 @@ export default class UserController extends Controller {
    */
   public async listEmotionsHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const user = await this.db.users.findById(req.params.id).select('emotions');
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('emotions');
       if (user == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
@@ -123,13 +129,15 @@ export default class UserController extends Controller {
   /**
    * Creates a new emotion.
    * 
+   * Path : `POST /users/:id/emotions`
+   * 
    * @param req Express request
    * @param res Express response
    * @async
    */
    public async createEmotionHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const user = await this.db.users.findById(req.params.id).select('emotions');
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('emotions');
       if (user == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
@@ -151,6 +159,8 @@ export default class UserController extends Controller {
   /**
    * Updates an emotion.
    * 
+   * Path : `PATCH /users/:id/emotions/:emotionId`
+   * 
    * @param req Express request
    * @param res Express response
    * @async
@@ -158,7 +168,7 @@ export default class UserController extends Controller {
    public async updateEmotionHandler(req: Request, res: Response): Promise<Response> {
     const { name, color } = req.body;
     try {
-      const user = await this.db.users.findById(req.params.id).select('emotions');
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('emotions');
       if (user == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
@@ -192,13 +202,15 @@ export default class UserController extends Controller {
   /**
    * Deletes an emotion.
    * 
+   * Path : `DELETE /users/:id/emotions/:emotionId`
+   * 
    * @param req Express request
    * @param res Express response
    * @async
    */
    public async deleteEmotionHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false);
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('emotions');
       if (user == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
@@ -213,6 +225,136 @@ export default class UserController extends Controller {
         }));
       }
       emotion.deleted = true;
+      await user.save();
+      return res.status(204).send();
+    } catch (err) {
+      this.logger.error(err);
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Lists days.
+   * 
+   * Path : `GET /users/:id/days`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+  public async listDaysHandler(req: Request, res: Response): Promise<Response> {
+    try {
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('days');
+      if (user == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'User not found'
+        }));
+      }
+      return res.status(200).send({ days: user.days });
+    } catch (err) {
+      this.logger.error(err);
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Creates a new day.
+   * 
+   * Path : `POST /users/:id/days`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+  public async createDayHandler(req: Request, res: Response): Promise<Response> {
+    try {
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('days');
+      if (user == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'User not found'
+        }));
+      }
+      user.days.push(req.body);
+      await user.save();
+      return res.status(201).send({ id: _.last(user.days).date });
+    } catch (err) {
+      this.logger.error(err);
+      if (err instanceof MongooseError.ValidationError) {
+        return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+      }
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Updates a day.
+   * 
+   * Path : `PATCH /users/:id/days/:date`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+  public async updateDayhandler(req: Request, res: Response): Promise<Response> {
+    const { description } = req.body;
+    try {
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('days');
+      if (user == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'User not found'
+        }));
+      }
+      const day = user.days.find(day => day.date === req.params.date);
+      if (day == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'Day not found'
+        }));
+      }
+      if (description) {
+        day.description = description;
+      }
+      await user.save();
+      return res.status(200).send({ id: day.date });
+    } catch (err) {
+      this.logger.error(err);
+      if (err instanceof MongooseError.ValidationError) {
+        return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+      }
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Deletes a day.
+   * 
+   * Path : `DELETE /users/:id/days/:date`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+  public async deleteDayHandler(req: Request, res: Response): Promise<Response> {
+    try {
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('days');
+      if (user == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'User not found'
+        }));
+      }
+      const day = user.days.find(day => day.date === req.params.date);
+      if (day == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'Day not found'
+        }));
+      }
+      _.remove(user.days, day);
+      user.markModified('days');
       await user.save();
       return res.status(204).send();
     } catch (err) {

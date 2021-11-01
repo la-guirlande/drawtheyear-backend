@@ -19,6 +19,10 @@ export default class SelfController extends Controller {
     this.registerEndpoint({ method: 'POST', uri: '/emotions', handlers: [container.auth.authenticateHandler, container.auth.isAuthenticatedHandler, this.createEmotionHandler] });
     this.registerEndpoint({ method: 'PATCH', uri: '/emotions/:emotionId', handlers: [container.auth.authenticateHandler, container.auth.isAuthenticatedHandler, this.updateEmotionHandler] });
     this.registerEndpoint({ method: 'DELETE', uri: '/emotions/:emotionId', handlers: [container.auth.authenticateHandler, container.auth.isAuthenticatedHandler, this.deleteEmotionHandler] });
+    this.registerEndpoint({ method: 'GET', uri: '/days', handlers: [container.auth.authenticateHandler, container.auth.isAuthenticatedHandler, this.listDaysHandler] });
+    this.registerEndpoint({ method: 'POST', uri: '/days', handlers: [container.auth.authenticateHandler, container.auth.isAuthenticatedHandler, this.createDayHandler] });
+    this.registerEndpoint({ method: 'PATCH', uri: '/days/:date', handlers: [container.auth.authenticateHandler, container.auth.isAuthenticatedHandler, this.updateDayhandler] });
+    this.registerEndpoint({ method: 'DELETE', uri: '/days/:date', handlers: [container.auth.authenticateHandler, container.auth.isAuthenticatedHandler, this.deleteDayHandler] });
   }
 
   /**
@@ -35,6 +39,7 @@ export default class SelfController extends Controller {
       const authUser: UserDocument = res.locals.authUser;
       authUser.deleted = undefined;
       authUser.emotions = undefined;
+      authUser.days = undefined;
       return res.status(200).json({ user: authUser });
     } catch (err) {
       this.logger.error(err);
@@ -43,7 +48,9 @@ export default class SelfController extends Controller {
   }
 
   /**
-   * Lists all user's emotions.
+   * Lists emotions.
+   * 
+   * Path : `GET /me/emotions`
    * 
    * @param req Express request
    * @param res Express response
@@ -62,6 +69,8 @@ export default class SelfController extends Controller {
 
   /**
    * Creates a new emotion.
+   * 
+   * Path : `POST /me/emotions`
    * 
    * @param req Express request
    * @param res Express response
@@ -84,6 +93,8 @@ export default class SelfController extends Controller {
 
   /**
    * Updates an emotion.
+   * 
+   * Path : `PATCH /me/emotions/:emotionId`
    * 
    * @param req Express request
    * @param res Express response
@@ -120,6 +131,8 @@ export default class SelfController extends Controller {
   /**
    * Deletes an emotion.
    * 
+   * Path : `DELETE /me/emotions/:emotionId`
+   * 
    * @param req Express request
    * @param res Express response
    * @async
@@ -135,6 +148,111 @@ export default class SelfController extends Controller {
         }));
       }
       emotion.deleted = true;
+      await authUser.save();
+      return res.status(204).send();
+    } catch (err) {
+      this.logger.error(err);
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Lists days.
+   * 
+   * Path : `GET /me/days`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+  public async listDaysHandler(req: Request, res: Response): Promise<Response> {
+    try {
+      return res.status(200).send({ days: (res.locals.authUser as UserDocument).days });
+    } catch (err) {
+      this.logger.error(err);
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Creates a new day.
+   * 
+   * Path : `POST /me/days`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+  public async createDayHandler(req: Request, res: Response): Promise<Response> {
+    try {
+      const authUser: UserDocument = res.locals.authUser;
+      authUser.days.push(req.body);
+      await authUser.save();
+      return res.status(201).send({ id: _.last(authUser.days).date });
+    } catch (err) {
+      this.logger.error(err);
+      if (err instanceof MongooseError.ValidationError) {
+        return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+      }
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Updates a day.
+   * 
+   * Path : `PATCH /me/days/:date`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+  public async updateDayhandler(req: Request, res: Response): Promise<Response> {
+    const { description } = req.body;
+    try {
+      const authUser: UserDocument = res.locals.authUser;
+      const day = authUser.days.find(day => day.date === req.params.date);
+      if (day == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'Day not found'
+        }));
+      }
+      if (description) {
+        day.description = description;
+      }
+      await authUser.save();
+      return res.status(200).send({ id: day.date });
+    } catch (err) {
+      this.logger.error(err);
+      if (err instanceof MongooseError.ValidationError) {
+        return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
+      }
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Deletes a day.
+   * 
+   * Path : `DELETE /me/days/:date`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+  public async deleteDayHandler(req: Request, res: Response): Promise<Response> {
+    try {
+      const authUser: UserDocument = res.locals.authUser;
+      const day = authUser.days.find(day => day.date === req.params.date);
+      if (day == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'Day not found'
+        }));
+      }
+      _.remove(authUser.days, day);
+      authUser.markModified('days');
       await authUser.save();
       return res.status(204).send();
     } catch (err) {
