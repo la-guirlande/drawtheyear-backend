@@ -1,4 +1,5 @@
 import { Mongoose } from 'mongoose';
+import createEmotionModel, { EmotionModel } from '../models/emotion-model';
 import createUserModel, { UserModel } from '../models/user-model';
 import Service from './service';
 import ServiceContainer from './service-container';
@@ -11,6 +12,7 @@ import ServiceContainer from './service-container';
 export default class DatabaseService extends Service {
 
   public readonly users: UserModel;
+  public readonly emotions: EmotionModel;
   private readonly mongoose: Mongoose;
 
   /**
@@ -22,6 +24,7 @@ export default class DatabaseService extends Service {
     super(container);
     this.mongoose = this.createMongoose();
     this.users = createUserModel(container, this.mongoose);
+    this.emotions = createEmotionModel(container, this.mongoose);
   }
 
   /**

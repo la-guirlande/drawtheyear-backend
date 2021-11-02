@@ -38,7 +38,7 @@ export default class SelfController extends Controller {
     try {
       const authUser: UserDocument = res.locals.authUser;
       authUser.deleted = undefined;
-      authUser.emotions = undefined;
+      authUser.depopulate('emotions');
       authUser.days = undefined;
       return res.status(200).json({ user: authUser });
     } catch (err) {
@@ -79,9 +79,8 @@ export default class SelfController extends Controller {
   public async createEmotionHandler(req: Request, res: Response): Promise<Response> {
     try {
       const authUser: UserDocument = res.locals.authUser;
-      authUser.emotions.push(req.body);
-      await authUser.save();
-      return res.status(201).send({ id: _.last(authUser.emotions).id });
+      const emotion = await this.db.emotions.create({ owner: authUser, ...req.body });
+      return res.status(201).send({ id: emotion.id });
     } catch (err) {
       this.logger.error(err);
       if (err instanceof MongooseError.ValidationError) {
@@ -117,7 +116,7 @@ export default class SelfController extends Controller {
       if (color != null) {
         emotion.color = color;
       }
-      await authUser.save();
+      await emotion.save();
       return res.status(200).send({ id: emotion.id });
     } catch (err) {
       this.logger.error(err);
@@ -148,7 +147,7 @@ export default class SelfController extends Controller {
         }));
       }
       emotion.deleted = true;
-      await authUser.save();
+      await emotion.save();
       return res.status(204).send();
     } catch (err) {
       this.logger.error(err);

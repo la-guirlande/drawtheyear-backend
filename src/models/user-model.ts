@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import moment from 'moment';
-import { Document, Model, Mongoose, Schema } from 'mongoose';
+import { Document, Model, Mongoose, Schema, Error as MongooseError } from 'mongoose';
 import { Permission, Role } from '../services/permission-service';
 import ServiceContainer from '../services/service-container';
+import { EmotionDocument } from './emotion-model';
 import Attributes, { DeletedAttributes, deletedPlugin } from './model';
 const mongooseToJson = require('@meanie/mongoose-to-json');
 
@@ -12,7 +13,7 @@ const mongooseToJson = require('@meanie/mongoose-to-json');
 export interface User extends Attributes, DeletedAttributes {
   googleId: string;
   role: Role;
-  emotions: Emotion[];
+  emotions: EmotionDocument[];
   days: Day[];
 }
 
@@ -29,19 +30,11 @@ export interface UserDocument extends User, Document {
 export interface UserModel extends Model<UserDocument> {}
 
 /**
- * Emotion attributes.
- */
-export interface Emotion extends Attributes, DeletedAttributes {
-  id: string;
-  name: string;
-  color: string;
-}
-
-/**
  * Day attributes.
  */
 export interface Day extends Attributes {
   date: string;
+  emotions: EmotionDocument[];
   description: string;
 }
 
@@ -73,23 +66,6 @@ function createUserSchema(container: ServiceContainer) {
       enum: Object.keys(container.config.services.permissions.roles),
       default: container.permissions.defaultRole
     },
-    emotions: {
-      type: [{
-        type: createEmotionSchema()
-      }],
-      default: [],
-      validate: [{
-        validator: (emotions: Emotion[]) => emotions.filter(emotion => !emotion.deleted).length <= 1000,
-        message: 'Too many emotions'
-      }, {
-        validator: (emotions: Emotion[]) => {
-          const activeEmotions = emotions.filter(emotion => !emotion.deleted);
-          _.uniq(activeEmotions.map(emotion => emotion.name)).length === activeEmotions.length
-        },
-        message: 'Emotion name already exists'
-      }],
-      select: false
-    },
     days: {
       type: [{
         type: createDaySchema()
@@ -107,36 +83,14 @@ function createUserSchema(container: ServiceContainer) {
     toObject: { virtuals: true }
   });
 
-  schema.method('hasPermission', function(this: UserDocument, perm: Permission) {
-    return container.permissions.getPermissions(this.role).includes(perm);
+  schema.virtual('emotions', {
+    ref: 'Emotion',
+    localField: '_id',
+    foreignField: 'owner'
   });
 
-  schema.plugin(mongooseToJson);
-  schema.plugin(deletedPlugin);
-
-  return schema;
-}
-
-/**
- * Creates the emotion subschema.
- * 
- * @returns Emotion subschema
- */
-function createEmotionSchema() {
-  const schema = new Schema<Emotion>({
-    name: {
-      type: Schema.Types.String,
-      required: [true, 'Emotion name is required'],
-      maxlength: [16, 'Emotion name is too long'],
-      unique: true
-    },
-    color: {
-      type: Schema.Types.String,
-      required: [true, 'Emotion color is required'],
-      match: [/#([a-f0-9]{3}){1,2}\b/i, 'Invalid emotion color']
-    }
-  }, {
-    timestamps: true
+  schema.method('hasPermission', function(this: UserDocument, perm: Permission) {
+    return container.permissions.getPermissions(this.role).includes(perm);
   });
 
   schema.plugin(mongooseToJson);
@@ -164,6 +118,13 @@ function createDaySchema() {
         },
         message: 'Invalid day date'
       }
+    },
+    emotions: {
+      type: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Emotion'
+      }],
+      required: [true, 'Day emotions are required']
     },
     description: {
       type: Schema.Types.String,
