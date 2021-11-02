@@ -112,14 +112,14 @@ export default class UserController extends Controller {
    */
   public async listEmotionsHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('emotions');
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('emotions').populate({ path: 'emotions', match: { deleted: false } });
       if (user == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
           error_description: 'User not found'
         }));
       }
-      return res.status(200).send({ emotions: user.emotions.filter(emotion => !emotion.deleted) });
+      return res.status(200).send({ emotions: user.emotions });
     } catch (err) {
       this.logger.error(err);
       return res.status(500).send(this.container.errors.formatServerError());
@@ -137,16 +137,14 @@ export default class UserController extends Controller {
    */
    public async createEmotionHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('emotions');
-      if (user == null) {
+      if (!await this.db.users.exists({ _id: req.params.id })) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
           error_description: 'User not found'
         }));
       }
-      user.emotions.push(req.body);
-      await user.save();
-      return res.status(201).send({ id: _.last(user.emotions).id });
+      const emotion = await this.db.emotions.create({ owner: req.params.id, ...req.body });
+      return res.status(201).send({ id: emotion.id });
     } catch (err) {
       this.logger.error(err);
       if (err instanceof MongooseError.ValidationError) {
@@ -168,14 +166,13 @@ export default class UserController extends Controller {
    public async updateEmotionHandler(req: Request, res: Response): Promise<Response> {
     const { name, color } = req.body;
     try {
-      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('emotions');
-      if (user == null) {
+      if (!await this.db.users.exists({ _id: req.params.id })) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
           error_description: 'User not found'
         }));
       }
-      const emotion = user.emotions.find(emotion => !emotion.deleted && emotion.id === req.params.emotionId);
+      const emotion = await this.db.emotions.findById(req.params.emotionId).where('deleted').equals(false);
       if (emotion == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
@@ -188,8 +185,8 @@ export default class UserController extends Controller {
       if (color != null) {
         emotion.color = color;
       }
-      await user.save();
-      return res.status(200).send({ id: req.params.emotionId });
+      await emotion.save();
+      return res.status(200).send({ id: emotion.id });
     } catch (err) {
       this.logger.error(err);
       if (err instanceof MongooseError.ValidationError) {
@@ -210,14 +207,13 @@ export default class UserController extends Controller {
    */
    public async deleteEmotionHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('emotions');
-      if (user == null) {
+      if (!await this.db.users.exists({ _id: req.params.id })) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
           error_description: 'User not found'
         }));
       }
-      const emotion = user.emotions.find(emotion => !emotion.deleted && emotion.id === req.params.emotionId);
+      const emotion = await this.db.emotions.findById(req.params.emotionId).where('deleted').equals(false);
       if (emotion == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
@@ -225,7 +221,7 @@ export default class UserController extends Controller {
         }));
       }
       emotion.deleted = true;
-      await user.save();
+      await emotion.save();
       return res.status(204).send();
     } catch (err) {
       this.logger.error(err);
