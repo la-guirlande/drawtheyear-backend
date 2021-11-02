@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import _ from 'lodash';
 import { Error as MongooseError } from 'mongoose';
-import { UserDocument } from '../models/user-model';
+import { Day, UserDocument } from '../models/user-model';
 import ServiceContainer from '../services/service-container';
 import Controller from './controller';
 
@@ -185,9 +185,10 @@ export default class SelfController extends Controller {
   public async createDayHandler(req: Request, res: Response): Promise<Response> {
     try {
       const authUser: UserDocument = res.locals.authUser;
-      authUser.days.push(req.body);
+      const day: Day = req.body;
+      authUser.days.push(day);
       await authUser.save();
-      return res.status(201).send({ id: _.last(authUser.days).date });
+      return res.status(201).send({ id: day.date });
     } catch (err) {
       this.logger.error(err);
       if (err instanceof MongooseError.ValidationError) {
@@ -207,7 +208,7 @@ export default class SelfController extends Controller {
    * @async
    */
   public async updateDayhandler(req: Request, res: Response): Promise<Response> {
-    const { description } = req.body;
+    const { description, emotions } = req.body;
     try {
       const authUser: UserDocument = res.locals.authUser;
       const day = authUser.days.find(day => day.date === req.params.date);
@@ -219,6 +220,9 @@ export default class SelfController extends Controller {
       }
       if (description) {
         day.description = description;
+      }
+      if (emotions) {
+        day.emotions = emotions;
       }
       await authUser.save();
       return res.status(200).send({ id: day.date });

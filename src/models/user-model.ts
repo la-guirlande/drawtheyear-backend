@@ -93,6 +93,16 @@ function createUserSchema(container: ServiceContainer) {
     return container.permissions.getPermissions(this.role).includes(perm);
   });
 
+  schema.pre('validate', async function(this: UserDocument, next) {
+    if (this.isModified('days')) {
+      await this.populate('days.emotions', 'owner');
+      if (!this.days.every(day => day.emotions.every(emotion => emotion.owner.toString() === this.id))) {
+        this.invalidate('days', 'Day emotion(s) not found');
+      }
+    }
+    next();
+  });
+
   schema.plugin(mongooseToJson);
   schema.plugin(deletedPlugin);
 
@@ -122,19 +132,26 @@ function createDaySchema() {
     emotions: {
       type: [{
         type: Schema.Types.ObjectId,
-        ref: 'Emotion'
+        ref: 'Emotion',
       }],
-      required: [true, 'Day emotions are required']
-    },
-    description: {
-      type: Schema.Types.String,
-      maxlength: [100000, 'Day description is too long'],
-      default: null
+      validate: [{
+        validator: (emotions: EmotionDocument[]) => emotions.length > 0,
+        message: 'Day emotions are required'
+      }, {
+        validator: (emotions: EmotionDocument[]) => _.uniq(emotions.map(emotion => emotion.id)).length === emotions.length,
+        message: 'Day emotion already exists'
+      }],
+      description: {
+        type: Schema.Types.String,
+        maxlength: [100000, 'Day description is too long'],
+        default: null
+      }
     }
   }, {
     _id: false,
     id: false,
     timestamps: true
   });
+
   return schema;
 }
