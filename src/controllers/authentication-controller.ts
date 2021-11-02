@@ -32,7 +32,7 @@ export default class AuthenticationController extends Controller {
   public async accessToken(req: Request, res: Response): Promise<Response> {
     try {
       // const response = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', { headers: { Authorization: res.getHeader('Authorization') as string } });
-      const accessToken = await this.container.tokens.encode<AccessTokenData>({ userId: '61800662d3d31572ebf83c92' }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '100d' });
+      const accessToken = await this.container.tokens.encode<AccessTokenData>({ userId: '61812492271832f17a07170d' }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '100d' });
       return res.status(200).json({ access_token: accessToken }); // TODO Check if the user is correct with Google API
     } catch (err) {
       this.logger.error(err);
