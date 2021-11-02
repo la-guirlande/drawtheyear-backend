@@ -44,7 +44,11 @@ export type Role = 'user' | 'admin';
  * Permission.
  */
 export type Permission
-  = 'abcd'
-  | 'efgh'
-  | '1234'
-  | '5678';
+  = 'own.read'
+  | 'own.write'
+  | 'own.emotion.read'
+  | 'own.emotion.write'
+  | 'user.read'
+  | 'user.write'
+  | 'user.emotion.read'
+  | 'user.emotion.write';
