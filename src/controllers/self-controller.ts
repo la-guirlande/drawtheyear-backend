@@ -166,7 +166,12 @@ export default class SelfController extends Controller {
    */
   public async listDaysHandler(req: Request, res: Response): Promise<Response> {
     try {
-      return res.status(200).send({ days: (res.locals.authUser as UserDocument).days });
+      const authUser: UserDocument = res.locals.authUser;
+      authUser.days.forEach(day => day.emotions.forEach(emotion => {
+        emotion.owner = undefined;
+        emotion.deleted = undefined;
+      }));
+      return res.status(200).send({ days: authUser.days });
     } catch (err) {
       this.logger.error(err);
       return res.status(500).send(this.container.errors.formatServerError());

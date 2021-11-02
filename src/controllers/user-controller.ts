@@ -240,7 +240,7 @@ export default class UserController extends Controller {
    */
   public async listDaysHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('days');
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('days').populate('days.emotions', '-owner -deleted');
       if (user == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
