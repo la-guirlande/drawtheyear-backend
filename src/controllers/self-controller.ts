@@ -218,10 +218,10 @@ export default class SelfController extends Controller {
           error_description: 'Day not found'
         }));
       }
-      if (description) {
+      if (description != null) {
         day.description = description;
       }
-      if (emotions) {
+      if (emotions != null) {
         day.emotions = emotions;
       }
       await authUser.save();

@@ -294,9 +294,9 @@ export default class UserController extends Controller {
    * @async
    */
   public async updateDayhandler(req: Request, res: Response): Promise<Response> {
-    const { description } = req.body;
+    const { description, emotions } = req.body;
     try {
-      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('days');
+      const user = await this.db.users.findById(req.params.id).where('deleted').equals(false).select('+days');
       if (user == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
@@ -310,9 +310,13 @@ export default class UserController extends Controller {
           error_description: 'Day not found'
         }));
       }
-      if (description) {
+      if (description != null) {
         day.description = description;
       }
+      if (emotions != null) {
+        day.emotions = emotions;
+      }
+      user.markModified('days');
       await user.save();
       return res.status(200).send({ id: day.date });
     } catch (err) {

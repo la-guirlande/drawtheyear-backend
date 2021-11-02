@@ -130,6 +130,11 @@ function createDaySchema() {
         message: 'Invalid day date'
       }
     },
+    description: {
+      type: Schema.Types.String,
+      maxlength: [100000, 'Day description is too long'],
+      default: null
+    },
     emotions: {
       type: [{
         type: Schema.Types.ObjectId,
@@ -141,12 +146,7 @@ function createDaySchema() {
       }, {
         validator: (emotions: EmotionDocument[]) => _.uniq(emotions.map(emotion => emotion.id)).length === emotions.length,
         message: 'Day emotion already exists'
-      }],
-      description: {
-        type: Schema.Types.String,
-        maxlength: [100000, 'Day description is too long'],
-        default: null
-      }
+      }]
     }
   }, {
     _id: false,
