@@ -21,6 +21,7 @@ export interface EmotionDocument extends Emotion, Document {}
 /**
  * Emotion model.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface EmotionModel extends Model<EmotionDocument> {}
 
 /**
@@ -29,7 +30,7 @@ export interface EmotionModel extends Model<EmotionDocument> {}
  * @param container Services container
  * @param mongoose Mongoose instance
  */
-export default function createModel(container: ServiceContainer, mongoose: Mongoose) {
+export default function createModel(container: ServiceContainer, mongoose: Mongoose): EmotionModel {
   return mongoose.model<EmotionDocument, EmotionModel>('Emotion', createEmotionSchema(container), 'emotions');
 }
 

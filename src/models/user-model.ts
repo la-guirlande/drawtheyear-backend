@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import moment from 'moment';
-import { Document, Model, Mongoose, Schema, Error as MongooseError } from 'mongoose';
+import { Document, Model, Mongoose, Schema } from 'mongoose';
 import { Permission, Role } from '../services/permission-service';
 import ServiceContainer from '../services/service-container';
 import { EmotionDocument } from './emotion-model';
@@ -27,6 +27,7 @@ export interface UserDocument extends User, Document {
 /**
  * User model.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface UserModel extends Model<UserDocument> {}
 
 /**
@@ -44,7 +45,7 @@ export interface Day extends Attributes {
  * @param container Services container
  * @param mongoose Mongoose instance
  */
-export default function createModel(container: ServiceContainer, mongoose: Mongoose) {
+export default function createModel(container: ServiceContainer, mongoose: Mongoose): UserModel {
   return mongoose.model<UserDocument, UserModel>('User', createUserSchema(container), 'users');
 }
 
