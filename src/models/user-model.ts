@@ -4,13 +4,13 @@ import { Document, Model, Mongoose, Schema } from 'mongoose';
 import { Permission, Role } from '../services/permission-service';
 import ServiceContainer from '../services/service-container';
 import { EmotionDocument } from './emotion-model';
-import Attributes, { DeletedAttributes, deletedPlugin } from './model';
+import Timestamps, { Deleted, deletedPlugin } from './model';
 const mongooseToJson = require('@meanie/mongoose-to-json');
 
 /**
  * User attributes.
  */
-export interface User extends Attributes, DeletedAttributes {
+export interface User extends Timestamps, Deleted {
   googleId: string;
   role: Role;
   emotions: EmotionDocument[];
@@ -33,7 +33,7 @@ export interface UserModel extends Model<UserDocument> {}
 /**
  * Day attributes.
  */
-export interface Day extends Attributes {
+export interface Day extends Timestamps {
   date: string;
   emotions: EmotionDocument[];
   description: string;
