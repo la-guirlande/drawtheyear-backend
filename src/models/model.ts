@@ -1,9 +1,9 @@
-import { Document, Model, Query, Schema } from 'mongoose';
+import { Schema } from 'mongoose';
 
 /**
- * Base model attributes.
+ * Timestamps model attributes.
  */
-export default interface Attributes {
+export default interface Timestamps {
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -11,7 +11,7 @@ export default interface Attributes {
 /**
  * Deleted model.
  */
-export interface DeletedAttributes {
+export interface Deleted {
   deleted: boolean;
 }
 

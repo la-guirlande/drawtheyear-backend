@@ -1,13 +1,13 @@
 import { Document, Model, Mongoose, Schema } from 'mongoose';
 import ServiceContainer from '../services/service-container';
-import Attributes, { DeletedAttributes, deletedPlugin } from './model';
+import Timestamps, { Deleted, deletedPlugin } from './model';
 import { UserDocument } from './user-model';
 const mongooseToJson = require('@meanie/mongoose-to-json');
 
 /**
  * Emotion attributes.
  */
-export interface Emotion extends Attributes, DeletedAttributes {
+export interface Emotion extends Timestamps, Deleted {
   owner: UserDocument;
   name: string;
   color: string;
